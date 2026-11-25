@@ -14,7 +14,21 @@ public class CreditCardPayment extends PaymentMethod {
 
     @Override
     public PaymentResult processPayment(double amount) {
-        // TODO: add basic validations
-        return new PaymentResult(true, "Paid " + amount + " using credit card ending with " + cardNumber.substring(cardNumber.length() - 4));
+        if (!Double.isFinite(amount) || amount <= 0) {
+            return new PaymentResult(false, "Payment amount must be greater than zero.");
+        }
+        if (cardHolderName == null || cardHolderName.isBlank()) {
+            return new PaymentResult(false, "Cardholder name is required.");
+        }
+
+        String digitsOnly = cardNumber == null ? "" : cardNumber.replaceAll("[\\s-]", "");
+        if (!digitsOnly.matches("\\d{12,19}")) {
+            return new PaymentResult(false, "Invalid credit card number.");
+        }
+
+        return new PaymentResult(
+                true,
+                "Paid " + amount + " using credit card ending with " + digitsOnly.substring(digitsOnly.length() - 4)
+        );
     }
 }

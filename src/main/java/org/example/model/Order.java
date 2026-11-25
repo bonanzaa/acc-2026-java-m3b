@@ -1,5 +1,7 @@
 package org.example.model;
 
+import org.example.config.AppConfig;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,18 +17,33 @@ public class Order {
         this.status = OrderStatus.NEW;
     }
 
-    public void addItem(OrderItem item){
-        // TODO: prevent adding items if order is already paid
-        items.add(item);
+    public void addItem(OrderItem item) {
+        if (isPaid()) {
+            System.out.println("Cannot add items to a paid order.");
+            return;
+        }
+        if (item != null) {
+            items.add(item);
+        }
     }
 
-    public double calculateTotal(){
-        // TODO: calculate total from all order items (including discounts)
-        return 0;
+    public double calculateTotal() {
+        double total = 0;
+        for (OrderItem item : items) {
+            total += item.calculateTotal();
+        }
+        return discount != null ? discount.apply(total) : total;
     }
 
-    public void markAsPaid(){
-        // TODO: validate order is not empty
+    public double calculateTotalWithTax(double taxRate) {
+        double discountedTotal = calculateTotal();
+        return discountedTotal * (1 + taxRate);
+    }
+
+    public void markAsPaid() {
+        if (items.isEmpty()) {
+            throw new IllegalStateException("Cannot mark an empty order as paid.");
+        }
         this.status = OrderStatus.PAID;
     }
 
@@ -61,8 +78,10 @@ public class Order {
             this.items.add(item);
             return this;
         }
-        public Order build(){
-            // TODO: validate customerName
+        public Order build() {
+            if (customerName == null || customerName.isBlank()) {
+                throw new IllegalStateException("Customer name is required.");
+            }
             return new Order(this);
         }
     }
